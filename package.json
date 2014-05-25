@@ -1,0 +1,21 @@
+{
+  "name": "fis-postpackager-autoload",
+  "version": "0.0.0",
+  "description": "a postpackager plugin for fis to auto load required resource",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hefangshi/fis-postpackager-autoload"
+  },
+  "keywords": [
+    "fis",
+    "postpackager",
+    "package",
+    "autoload"
+  ],
+  "author": "hefangshi",
+  "license": "MIT"
+}
