@@ -34,4 +34,4 @@ fis.config.set('settings.postpackager.autoload.useSiteMap', false);
 
 ## DEMO
 
-TODO
+[modjs-autoload-demo](https://github.com/hefangshi/modjs-autoload-demo)
