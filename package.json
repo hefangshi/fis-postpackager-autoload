@@ -1,18 +1,18 @@
 {
-  "name": "fis-postpackager-autoload",
+  "name": "fis-prepackager-autoload",
   "version": "0.0.0",
-  "description": "a postpackager plugin for fis to auto load required resource",
+  "description": "a prepackager plugin for fis to auto load required resource",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/hefangshi/fis-postpackager-autoload"
+    "url": "https://github.com/hefangshi/fis-prepackager-autoload"
   },
   "keywords": [
     "fis",
-    "postpackager",
+    "prepackager",
     "package",
     "autoload"
   ],
