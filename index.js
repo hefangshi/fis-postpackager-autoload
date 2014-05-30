@@ -230,7 +230,7 @@ module.exports = function (ret, settings, conf, opt) { //打包后处理
             else if (dep.isCssLike)
                 cssList.push(dep);
             else
-                fis.log.warn('[' + dep.getId() + '] is required, but ignored since it\'s not javascript or stylesheet')
+                fis.log.warning('[' + dep.getId() + '] is required, but ignored since it\'s not javascript or stylesheet')
         });
         var content = file.getContent();
         content = injectCss(cssList, content);
