@@ -1,4 +1,4 @@
-# fis-prepackager-autoload
+# fis-postpackager-autoload
 
 用于自动加载模块化资源的[FIS](https://github.com/fex-team/fis)插件
 
@@ -21,9 +21,9 @@
 
 ```javascript
 //file : path/to/project/fis-conf.js
-fis.config.set('modules.prepackager', 'autoload');
+fis.config.set('modules.postpackager', 'autoload');
 //添加combine插件，自动应用pack配置，打包零散资源
-//fis.config.set('modules.postpackager', 'simple');
+//fis.config.set('modules.postpackager', 'autoload, simple');
 //设置useSiteMap切换整站/页面异步资源表配置
 fis.config.set('settings.prepackager.autoload.useSiteMap', false);
 ```
