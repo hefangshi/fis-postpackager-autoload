@@ -5,7 +5,7 @@
 
 'use strict';
 
-module.exports = function (ret, settings, conf, opt) { //打包后处理
+module.exports = function (ret, conf, settings, opt) { //打包后处理
     var asyncCount = 0;
     var siteAsync = null;
 
@@ -18,7 +18,7 @@ module.exports = function (ret, settings, conf, opt) { //打包后处理
     function injectJs(jsList, content) {
         var script = jsList.reduce(function (prev, now) {
             var uri = now.getUrl(opt.hash, opt.domain);
-            return prev + '<script src="' + uri + '"></script>\r\n';
+            return prev + '<script type="text/javascript" src="' + uri + '"></script>\r\n';
         }, '');
         return content.replace(/<\/head>/, script + '\n$&');
     }
@@ -32,7 +32,7 @@ module.exports = function (ret, settings, conf, opt) { //打包后处理
     function injectCss(cssList, content) {
         var css = cssList.reduce(function (prev, now) {
             var uri = now.getUrl(opt.hash, opt.domain);
-            return prev + '<link rel="stylesheet" href="' + uri + '">\r\n';
+            return prev + '<link rel="stylesheet" type="text/css" href="' + uri + '">\r\n';
         }, '');
         return content.replace(/<\/head>/, css + '\n$&');
     }
@@ -113,14 +113,19 @@ module.exports = function (ret, settings, conf, opt) { //打包后处理
             fis.util.map(ret.map.res, function (id, res) {
                 asyncList.push(ret.ids[id]);
             });
-            var subpath = (conf.subpath || 'pkg/map.js').replace(/^\//, '');
+            var subpath = (settings.subpath || 'pkg/map.js').replace(/^\//, '');
             return genAsyncMap(asyncList, subpath);
         }
 
         if (!siteAsync)
             siteAsync = genSiteAsyncMap();
-        var script = '<script data-single="true" src="' + siteAsync.getUrl(opt.hash, opt.domain) + '"></script>';
-        return content.replace(/<\/head>/, script + '\n$&');
+        var mapScript = null;
+        if (settings.useInlineMap){
+            mapScript = '<script type="text/javascript">\r\n' + siteAsync.getContent() + '"\r\n</script>';
+        }else{
+            mapScript = '<script data-single="true" src="' + siteAsync.getUrl(opt.hash, opt.domain) + '"></script>';
+        }
+        return content.replace(/<\/head>/, mapScript + '\n$&');
     }
 
     /**
@@ -135,8 +140,13 @@ module.exports = function (ret, settings, conf, opt) { //打包后处理
         var subpath = 'pkg/page_map_${index}.js'.replace('${index}', asyncCount);
         var file = genAsyncMap(asyncList, subpath);
         asyncCount++;
-        var script = '<script data-single="true" src="' + file.getUrl(opt.hash, opt.domain) + '"></script>';
-        return content.replace(/<\/head>/, script + '\n$&');
+        var mapScript;
+        if (settings.useInlineMap){
+            mapScript = '<script type="text/javascript">\r\n' + file.getContent() + '"\r\n</script>';
+        }else{
+            mapScript = '<script type="text/javascript" data-single="true" src="' + file.getUrl(opt.hash, opt.domain) + '"></script>';
+        }
+        return content.replace(/<\/head>/, mapScript + '\n$&');
     }
 
     /**
@@ -234,7 +244,7 @@ module.exports = function (ret, settings, conf, opt) { //打包后处理
         });
         var content = file.getContent();
         content = injectCss(cssList, content);
-        if (conf.useSiteMap) {
+        if (settings.useSiteMap) {
             content = injectSiteAsync(content);
         } else {
             content = injectAsync(asyncList, content);

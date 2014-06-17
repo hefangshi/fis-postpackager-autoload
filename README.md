@@ -24,9 +24,13 @@
 fis.config.set('modules.postpackager', 'autoload');
 //添加combine插件，自动应用pack配置，打包零散资源
 //fis.config.set('modules.postpackager', 'autoload, simple');
-//设置useSiteMap切换整站/页面异步资源表配置
-fis.config.set('settings.postpackager.autoload.useSiteMap', false);
+//useSiteMap设置使用整站/页面异步资源表配置，默认为false
+fis.config.set('settings.postpackager.autoload.useSiteMap', true);
+//useInlineMap设置内联resourceMap还是异步加载resourceMap，默认为false
+fis.config.set('settings.postpackager.autoload.useInlineMap', true);
 ```
+
+添加useInlineMap选项
 
 **注意**
 
