@@ -121,7 +121,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             siteAsync = genSiteAsyncMap();
         var mapScript = null;
         if (settings.useInlineMap){
-            mapScript = '<script type="text/javascript">\r\n' + siteAsync.getContent() + '"\r\n</script>';
+            mapScript = '<script type="text/javascript">\r\n' + siteAsync.getContent() + '\r\n</script>';
         }else{
             mapScript = '<script data-single="true" src="' + siteAsync.getUrl(opt.hash, opt.domain) + '"></script>';
         }
@@ -142,7 +142,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         asyncCount++;
         var mapScript;
         if (settings.useInlineMap){
-            mapScript = '<script type="text/javascript">\r\n' + file.getContent() + '"\r\n</script>';
+            mapScript = '<script type="text/javascript">\r\n' + file.getContent() + '\r\n</script>';
         }else{
             mapScript = '<script type="text/javascript" data-single="true" src="' + file.getUrl(opt.hash, opt.domain) + '"></script>';
         }
