@@ -22,12 +22,19 @@
 ```javascript
 //file : path/to/project/fis-conf.js
 fis.config.set('modules.postpackager', 'autoload');
+
 //添加combine插件，自动应用pack配置，打包零散资源
 //fis.config.set('modules.postpackager', 'autoload, simple');
+
 //useSiteMap设置使用整站/页面异步资源表配置，默认为false
 fis.config.set('settings.postpackager.autoload.useSiteMap', true);
+
 //useInlineMap设置内联resourceMap还是异步加载resourceMap，默认为false
 fis.config.set('settings.postpackager.autoload.useInlineMap', true);
+
+//通过include属性将额外的资源增加入resourceMap中
+fis.config.set('settings.postpackager.autoload.include', /^\/somepath\//i);
+
 ```
 
 添加useInlineMap选项

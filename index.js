@@ -9,6 +9,10 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
     var asyncCount = 0;
     var siteAsync = null;
 
+    function unique(value, index, self){
+        return self.indexOf(value) === index;
+    }
+
     /**
      * 页面中注入JS资源引用
      * @param jsList
@@ -83,6 +87,9 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
                                 return false;
                             return true;
                         });
+                        if (map.pkg[res.pkg].deps.length === 0){
+                            delete map.pkg[res.pkg].deps;
+                        }
                     }
                 }
             } else {
@@ -216,23 +223,27 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
     /**
      * 对类HTML文件进行资源加载注入
      * @param file
+     * @param include
      */
-    function injectAutoLoad(file) {
+    function injectAutoLoad(file, include) {
         var depList = getDepList(file);
         var asyncList = getAsyncList(file);
         var jsList = [];
         var cssList = [];
-        //将同步资源从异步资源中剔除
+        //将include资源添加入异步资源
+        asyncList = asyncList.concat(include);
+        asyncList = asyncList.filter(unique);
         asyncList = asyncList.filter(function (async) {
-            if (depList.indexOf(async) == -1) {
-                //将样式表资源强制设定为同步加载，避免异步加载样式表
-                if (async.isCssLike) {
-                    depList.push(async);
-                    return false;
-                }
-                return true;
+            //将同步资源从异步资源中剔除
+            if (depList.indexOf(async) !== -1) {
+                return false;
             }
-            return false;
+            //将样式表资源强制设定为同步加载，避免异步加载样式表
+            if (async.isCssLike) {
+                depList.push(async);
+                return false;
+            }
+            return true;
         });
         depList.forEach(function (dep) {
             if (dep.isJsLike)
@@ -253,9 +264,18 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         file.setContent(content);
     }
 
+    var includeAsyncList = [];
+
+    fis.util.map(ret.src, function (subpath, file) {
+        if (settings.include && (file.isJsLike || file.jsCssLike) && file.release && fis.util.filter(subpath, settings.include)){
+            includeAsyncList.push(file);
+            includeAsyncList = includeAsyncList.concat(getDepList(file), getAsyncList(file));
+        }
+    });
+
     fis.util.map(ret.src, function (subpath, file) {
         if (file.isHtmlLike) {
-            injectAutoLoad(file);
+            injectAutoLoad(file, includeAsyncList);
         }
     });
 };
