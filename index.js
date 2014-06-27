@@ -22,7 +22,15 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
     function injectJs(jsList, content) {
         var script = jsList.reduce(function (prev, now) {
             var uri = now.getUrl(opt.hash, opt.domain);
-            return prev + '<script type="text/javascript" src="' + uri + '"></script>\r\n';
+            var attr = '';
+            if (now.extra && now.extra.scriptTag){
+                if (now.extra.scriptTag instanceof Function){
+                    attr = now.extra.scriptTag(now);
+                }else{
+                    attr = now.extra.scriptTag;
+                }
+            }
+            return [prev, '<script ', attr ,' type="text/javascript" src="', uri, '"></script>\r\n'].join('');
         }, '');
         return content.replace(/<\/head>/, script + '\n$&');
     }
@@ -128,7 +136,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             siteAsync = genSiteAsyncMap();
         var mapScript = null;
         if (settings.useInlineMap){
-            mapScript = '<script type="text/javascript">\r\n' + siteAsync.getContent() + '\r\n</script>';
+            mapScript = '<script type="text/javascript" ' + settings.resourceMapTag + ' >\r\n' + siteAsync.getContent() + '\r\n</script>';
         }else{
             mapScript = '<script data-single="true" src="' + siteAsync.getUrl(opt.hash, opt.domain) + '"></script>';
         }
@@ -149,7 +157,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         asyncCount++;
         var mapScript;
         if (settings.useInlineMap){
-            mapScript = '<script type="text/javascript">\r\n' + file.getContent() + '\r\n</script>';
+            mapScript = '<script type="text/javascript" ' + settings.resourceMapTag + ' >\r\n' + file.getContent() + '\r\n</script>';
         }else{
             mapScript = '<script type="text/javascript" data-single="true" src="' + file.getUrl(opt.hash, opt.domain) + '"></script>';
         }
