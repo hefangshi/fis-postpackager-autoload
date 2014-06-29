@@ -8,6 +8,13 @@
 module.exports = function (ret, conf, settings, opt) { //打包后处理
     var asyncCount = 0;
     var siteAsync = null;
+    var defaultSettings = {
+        scriptTag : '<!--SCRIPT_PLACEHOLDER-->',
+        styleTag : '<!--STYLE_PLACEHOLDER-->',
+        resourceMapTag : '<!--RESOURCEMAP_PLACEHOLDER-->'
+    };
+
+    settings = fis.util.merge(defaultSettings, settings);
 
     function unique(value, index, self){
         return self.indexOf(value) === index;
@@ -21,18 +28,15 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
      */
     function injectJs(jsList, content) {
         var script = jsList.reduce(function (prev, now) {
-            var uri = now.getUrl(opt.hash, opt.domain);
-            var attr = '';
-            if (now.extra && now.extra.scriptTag){
-                if (now.extra.scriptTag instanceof Function){
-                    attr = now.extra.scriptTag(now);
-                }else{
-                    attr = now.extra.scriptTag;
-                }
-            }
-            return [prev, '<script ', attr ,' type="text/javascript" src="', uri, '"></script>\r\n'].join('');
+            var uri = now.uri;
+            return [prev, '<script type="text/javascript" src="', uri, '"></script>\r\n'].join('');
         }, '');
-        return content.replace(/<\/head>/, script + '\n$&');
+        if (content.indexOf(settings.scriptTag) !== -1){
+            content = content.replace(settings.scriptTag, script);
+        }else{
+            content = content.replace(/<\/head>/, script + '\n$&');
+        }
+        return content;
     }
 
     /**
@@ -43,19 +47,26 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
      */
     function injectCss(cssList, content) {
         var css = cssList.reduce(function (prev, now) {
-            var uri = now.getUrl(opt.hash, opt.domain);
+            var uri = now.uri;
             return prev + '<link rel="stylesheet" type="text/css" href="' + uri + '">\r\n';
         }, '');
-        return content.replace(/<\/head>/, css + '\n$&');
+        if (content.indexOf(settings.styleTag) !== -1){
+            content = content.replace(settings.styleTag, css);
+        }else{
+            content = content.replace(/<\/head>/, css + '\n$&');
+        }
+        return content;
     }
 
     /**
      * 根据异步资源列表生成异步资源配置文件，并加入处理流程中
      * @param asyncList 异步资源列表
      * @param subpath 文件路径
+     * @param usedSync 已知引用的模块，用于减化异步表
      * @returns {*}
      */
-    function genAsyncMap(asyncList, subpath) {
+    function genAsyncMap(asyncList, subpath, usedSync) {
+        usedSync = usedSync || {};
         //生成async加载需要使用的resourceMap
         var map = {
             res: {},
@@ -75,10 +86,11 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             if (res.deps) {
                 r.deps = res.deps.filter(function (dep) {
                     var file = ret.ids[dep];
-                    if (!file || file.isCssLike)
-                        return false;
-                    return true;
+                    return file && !file.isCssLike && !usedSync[dep];
                 });
+                if (r.deps.length === 0){
+                    delete r.deps;
+                }
             }
             //有打包的话就不要加url了，以减少map.js的体积
             if (res.pkg) {
@@ -91,9 +103,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
                     if (map_pkg.deps) {
                         map.pkg[res.pkg].deps = map_pkg.deps.filter(function (dep) {
                             var file = ret.ids[dep];
-                            if (!file || file.isCssLike)
-                                return false;
-                            return true;
+                            return file && !file.isCssLike && !usedSync[dep];
                         });
                         if (map.pkg[res.pkg].deps.length === 0){
                             delete map.pkg[res.pkg].deps;
@@ -125,7 +135,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
     function injectSiteAsync(content) {
         function genSiteAsyncMap() {
             var asyncList = [];
-            fis.util.map(ret.map.res, function (id, res) {
+            fis.util.map(ret.map.res, function (id) {
                 asyncList.push(ret.ids[id]);
             });
             var subpath = (settings.subpath || 'pkg/map.js').replace(/^\//, '');
@@ -134,13 +144,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
 
         if (!siteAsync)
             siteAsync = genSiteAsyncMap();
-        var mapScript = null;
-        if (settings.useInlineMap){
-            mapScript = '<script type="text/javascript" ' + settings.resourceMapTag + ' >\r\n' + siteAsync.getContent() + '\r\n</script>';
-        }else{
-            mapScript = '<script data-single="true" src="' + siteAsync.getUrl(opt.hash, opt.domain) + '"></script>';
-        }
-        return content.replace(/<\/head>/, mapScript + '\n$&');
+        return injectAsyncWithMap(content, siteAsync);
     }
 
     /**
@@ -149,19 +153,29 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
      * @param content
      * @returns {*}
      */
-    function injectAsync(asyncList, content) {
-        if (asyncList.length === 0)
-            return content;
+    function injectAsync(asyncList, content, usedSync) {
+        if (asyncList.length === 0){
+            return content.replace(settings.resourceMapTag, '');
+        }
         var subpath = 'pkg/page_map_${index}.js'.replace('${index}', asyncCount);
-        var file = genAsyncMap(asyncList, subpath);
+        var file = genAsyncMap(asyncList, subpath, usedSync);
         asyncCount++;
+        return injectAsyncWithMap(content, file);
+    }
+
+    function injectAsyncWithMap(content, resourceMapFile){
         var mapScript;
         if (settings.useInlineMap){
-            mapScript = '<script type="text/javascript" ' + settings.resourceMapTag + ' >\r\n' + file.getContent() + '\r\n</script>';
+            mapScript = '<script type="text/javascript" >\r\n' + resourceMapFile.getContent() + '\r\n</script>';
         }else{
-            mapScript = '<script type="text/javascript" data-single="true" src="' + file.getUrl(opt.hash, opt.domain) + '"></script>';
+            mapScript = '<script type="text/javascript" data-single="true" src="' + resourceMapFile.getUrl(opt.hash, opt.domain) + '"></script>';
         }
-        return content.replace(/<\/head>/, mapScript + '\n$&');
+        if (content.indexOf(settings.resourceMapTag) !== -1){
+            content = content.replace(settings.resourceMapTag, mapScript);
+        }else{
+            content = content.replace(/<\/head>/, mapScript + '\n$&');
+        }
+        return content;
     }
 
     /**
@@ -171,7 +185,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
      * @returns {Array}
      */
     function getDepList(file, added) {
-        var deps = [];
+        var depList = [];
         added = added || {};
         file.requires.forEach(function (depId) {
             if (added[depId]) {
@@ -182,10 +196,10 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             if (!dep){
                 fis.log.error('can\'t find dep resource ['+depId+']');
             }
-            deps = deps.concat(getDepList(dep, added));
-            deps.push(dep);
+            depList = depList.concat(getDepList(dep, added));
+            depList.push(dep);
         });
-        return deps;
+        return depList;
     }
 
     /**
@@ -240,10 +254,9 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         var cssList = [];
         //将include资源添加入异步资源
         asyncList = asyncList.concat(include);
-        asyncList = asyncList.filter(unique);
-        asyncList = asyncList.filter(function (async) {
-            //将同步资源从异步资源中剔除
-            if (depList.indexOf(async) !== -1) {
+        asyncList = asyncList.filter(function (async, index) {
+            //去除重复资源
+            if (asyncList.indexOf(async) !== index){
                 return false;
             }
             //将样式表资源强制设定为同步加载，避免异步加载样式表
@@ -253,20 +266,38 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             }
             return true;
         });
+        //生成同步资源引用列表
+        var usedPkg = {};
+        var usedSync= {};
         depList.forEach(function (dep) {
+            var res = ret.map.res[dep.getId()];
+            usedSync[dep.getId()] = true;
+            if (res.pkg && ret.map.pkg[res.pkg]){
+                if (usedPkg[res.pkg]){
+                    return true;
+                }
+                ret.map.pkg[res.pkg].has.forEach(function(has){
+                    usedSync[has] = true;
+                });
+                usedPkg[res.pkg] = true;
+                res = ret.map.pkg[res.pkg];
+            }
             if (dep.isJsLike)
-                jsList.push(dep);
+                jsList.push(res);
             else if (dep.isCssLike)
-                cssList.push(dep);
+                cssList.push(res);
             else
                 fis.log.warning('[' + dep.getId() + '] is required, but ignored since it\'s not javascript or stylesheet')
+        });
+        asyncList = asyncList.filter(function (async) {
+            return !usedSync[async.getId()];
         });
         var content = file.getContent();
         content = injectCss(cssList, content);
         if (settings.useSiteMap) {
             content = injectSiteAsync(content);
         } else {
-            content = injectAsync(asyncList, content);
+            content = injectAsync(asyncList, content, usedSync);
         }
         content = injectJs(jsList, content);
         file.setContent(content);
