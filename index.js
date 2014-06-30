@@ -85,8 +85,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             var res = ret.map.res[id];
             if (res.deps) {
                 r.deps = res.deps.filter(function (dep) {
-                    var file = ret.ids[dep];
-                    return file && !file.isCssLike && !usedSync[dep];
+                    return !usedSync[dep];
                 });
                 if (r.deps.length === 0){
                     delete r.deps;
@@ -102,8 +101,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
                     };
                     if (map_pkg.deps) {
                         map.pkg[res.pkg].deps = map_pkg.deps.filter(function (dep) {
-                            var file = ret.ids[dep];
-                            return file && !file.isCssLike && !usedSync[dep];
+                            return !usedSync[dep];
                         });
                         if (map.pkg[res.pkg].deps.length === 0){
                             delete map.pkg[res.pkg].deps;
