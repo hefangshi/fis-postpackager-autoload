@@ -76,10 +76,11 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             var id = async.getId();
             if (ret.ids[id]){
                 if (ret.ids[id].isCssLike){
-                    return false;
+                    return true;
                 }
             }else{
-                fis.log.error('can\'t find async resource ['+id+']');
+                fis.log.warning('can\'t find async resource ['+id+']');
+                return true;
             }
             var r = map.res[id] = {};
             var res = ret.map.res[id];
@@ -192,7 +193,8 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             added[depId] = true;
             var dep = ret.ids[depId];
             if (!dep){
-                fis.log.error('can\'t find dep resource ['+depId+']');
+                fis.log.warning('can\'t find dep resource ['+depId+']');
+                return true;
             }
             depList = depList.concat(getDepList(dep, added));
             depList.push(dep);
@@ -219,7 +221,8 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             depScaned[depId] = true;
             var dep = ret.ids[depId];
             if (!dep){
-                fis.log.error('can\'t find dep resource ['+depId+']');
+                fis.log.warning('can\'t find dep resource ['+depId+']');
+                return true;
             }
             asyncList = asyncList.concat(getAsyncList(dep, added, depScaned));
         });
@@ -230,7 +233,8 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             added[asyncId] = true;
             var async = ret.ids[asyncId];
             if (!async){
-                fis.log.error('can\'t find async resource ['+asyncId+']');
+                fis.log.warning('can\'t find async resource ['+asyncId+']');
+                return true;
             }
             asyncList = asyncList.concat(getAsyncList(async, added, depScaned));
             //异步资源依赖需要递归添加所有同步依赖
