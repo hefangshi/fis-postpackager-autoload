@@ -13,6 +13,12 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         styleTag : '<!--STYLE_PLACEHOLDER-->',
         resourceMapTag : '<!--RESOURCEMAP_PLACEHOLDER-->'
     };
+    var idMaps = {};
+
+    //ret.ids内只有map表中的id映射，此处生成全部映射
+    fis.util.map(ret.src, function(subpath, file){
+        idMaps[file.getId()] = file;
+    });
 
     settings = fis.util.merge(defaultSettings, settings);
 
@@ -74,12 +80,11 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         };
         asyncList.forEach(function (async) {
             var id = async.getId();
-            if (ret.ids[id]){
-                if (ret.ids[id].isCssLike){
-                    return true;
-                }
-            }else{
+            if (!async){
                 fis.log.warning('can\'t find async resource ['+id+']');
+                return true;
+            }
+            if (async.isCssLike){
                 return true;
             }
             var r = map.res[id] = {};
@@ -119,6 +124,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         file.setContent(code);
         ret.pkg[subpath] = file;
         ret.ids[file.getId()] = file;
+        idMaps[file.getId()] = file;
         ret.map.res[file.getId()] = {
             uri: file.getUrl(opt.hash, opt.domain),
             type: "js"
@@ -135,7 +141,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         function genSiteAsyncMap() {
             var asyncList = [];
             fis.util.map(ret.map.res, function (id) {
-                asyncList.push(ret.ids[id]);
+                asyncList.push(idMaps[id]);
             });
             var subpath = (settings.subpath || 'pkg/map.js').replace(/^\//, '');
             return genAsyncMap(asyncList, subpath);
@@ -191,7 +197,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
                 return false;
             }
             added[depId] = true;
-            var dep = ret.ids[depId];
+            var dep = idMaps[depId];
             if (!dep){
                 fis.log.warning('can\'t find dep resource ['+depId+']');
                 return true;
@@ -219,7 +225,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
                 return false;
             }
             depScaned[depId] = true;
-            var dep = ret.ids[depId];
+            var dep = idMaps[depId];
             if (!dep){
                 fis.log.warning('can\'t find dep resource ['+depId+']');
                 return true;
@@ -231,7 +237,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
                 return false;
             }
             added[asyncId] = true;
-            var async = ret.ids[asyncId];
+            var async = idMaps[asyncId];
             if (!async){
                 fis.log.warning('can\'t find async resource ['+asyncId+']');
                 return true;
@@ -273,7 +279,12 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         var usedSync= {};
         depList.forEach(function (dep) {
             var res = ret.map.res[dep.getId()];
+            if (!res){
+                fis.log.notice("autoload: [" + dep.getId() + "] is required, but ignored since it's not in map.json");
+                return true;
+            }
             usedSync[dep.getId()] = true;
+            //将离散资源替换为打包资源
             if (res.pkg && ret.map.pkg[res.pkg]){
                 if (usedPkg[res.pkg]){
                     return true;
@@ -289,7 +300,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             else if (dep.isCssLike)
                 cssList.push(res);
             else
-                fis.log.warning('[' + dep.getId() + '] is required, but ignored since it\'s not javascript or stylesheet')
+                fis.log.notice('autoload: [' + dep.getId() + '] is required, but ignored since it\'s not javascript or stylesheet')
         });
         asyncList = asyncList.filter(function (async) {
             return !usedSync[async.getId()];
