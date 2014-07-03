@@ -11,7 +11,8 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
     var defaultSettings = {
         scriptTag : '<!--SCRIPT_PLACEHOLDER-->',
         styleTag : '<!--STYLE_PLACEHOLDER-->',
-        resourceMapTag : '<!--RESOURCEMAP_PLACEHOLDER-->'
+        resourceMapTag : '<!--RESOURCEMAP_PLACEHOLDER-->',
+        optDeps: true
     };
     var idMaps = {};
 
@@ -91,7 +92,11 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             var res = ret.map.res[id];
             if (res.deps) {
                 r.deps = res.deps.filter(function (dep) {
-                    return !usedSync[dep];
+                    if (settings.optDeps) {
+                        return !usedSync[dep];
+                    }else{
+                        return true;
+                    }
                 });
                 if (r.deps.length === 0){
                     delete r.deps;
@@ -107,7 +112,11 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
                     };
                     if (map_pkg.deps) {
                         map.pkg[res.pkg].deps = map_pkg.deps.filter(function (dep) {
-                            return !usedSync[dep];
+                            if (settings.optDeps) {
+                                return !usedSync[dep];
+                            }else{
+                                return true;
+                            }
                         });
                         if (map.pkg[res.pkg].deps.length === 0){
                             delete map.pkg[res.pkg].deps;
