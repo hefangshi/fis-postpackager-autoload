@@ -68,8 +68,6 @@ fis.config.set('settings.postpackager.autoload.styleTag', '<!--STYLE_PLACEHOLDER
 fis.config.set('settings.postpackager.autoload.resourceMapTag', '<!--RESOURCEMAP_PLACEHOLDER-->');
 ```
 
-点击查看[更多介绍](#)
-
 ## DEMO
 
 [modjs-autoload-demo](https://github.com/hefangshi/modjs-autoload-demo)
