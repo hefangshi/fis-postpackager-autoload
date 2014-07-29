@@ -12,13 +12,13 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         scriptTag : '<!--SCRIPT_PLACEHOLDER-->',
         styleTag : '<!--STYLE_PLACEHOLDER-->',
         resourceMapTag : '<!--RESOURCEMAP_PLACEHOLDER-->',
-        codeGen : 'mod'
+        type : 'mod'
     };
 
     settings = fis.util.merge(defaultSettings, settings);
 
     if (typeof settings.codeGen !== Function) {
-        switch (settings.codeGen){
+        switch (settings.type){
             case 'mod':
                 settings.codeGen = modJsCodeGen;
                 break;
@@ -26,7 +26,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
                 settings.codeGen = requireJSCodeGen;
                 break;
             default:
-                throw new Error('invalid codeGen');
+                throw new Error('invalid type');
         }
     }
 
@@ -302,6 +302,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         var usedSync= {};
         depList.forEach(function (dep) {
             var res = ret.map.res[dep.getId()];
+            res.id = dep.getId();
             usedSync[dep.getId()] = true;
             if (res.pkg && ret.map.pkg[res.pkg]){
                 if (usedPkg[res.pkg]){
