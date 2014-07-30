@@ -110,7 +110,8 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
                     return false;
                 }
             }else{
-                fis.log.error('can\'t find async resource ['+id+']');
+                fis.log.notice('can\'t find async resource ['+id+']');
+                return false;
             }
             var r = map.res[id] = {};
             var res = ret.map.res[id];
@@ -225,7 +226,8 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             added[depId] = true;
             var dep = ret.ids[depId];
             if (!dep){
-                fis.log.error('can\'t find dep resource ['+depId+']');
+                fis.log.notice('can\'t find dep resource ['+depId+']');
+                return false;
             }
             depList = depList.concat(getDepList(dep, added));
             depList.push(dep);
@@ -252,7 +254,8 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             depScaned[depId] = true;
             var dep = ret.ids[depId];
             if (!dep){
-                fis.log.error('can\'t find dep resource ['+depId+']');
+                fis.log.notice('can\'t find dep resource ['+depId+']');
+                return false;
             }
             asyncList = asyncList.concat(getAsyncList(dep, added, depScaned));
         });
@@ -263,7 +266,8 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             added[asyncId] = true;
             var async = ret.ids[asyncId];
             if (!async){
-                fis.log.error('can\'t find async resource ['+asyncId+']');
+                fis.log.notice('can\'t find async resource ['+asyncId+']');
+                return false;
             }
             asyncList = asyncList.concat(getAsyncList(async, added, depScaned));
             //异步资源依赖需要递归添加所有同步依赖
@@ -319,7 +323,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             else if (dep.isCssLike)
                 cssList.push(res);
             else
-                fis.log.warning('[' + dep.getId() + '] is required, but ignored since it\'s not javascript or stylesheet')
+                fis.log.notice('[' + dep.getId() + '] is required, but ignored since it\'s not javascript or stylesheet');
         });
         asyncList = asyncList.filter(function (async) {
             return !usedSync[async.getId()];
@@ -347,6 +351,9 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
     fis.util.map(ret.src, function (subpath, file) {
         if (file.isHtmlLike) {
             injectAutoLoad(file, includeAsyncList);
+            if (file.useCache){
+                ret.pkg[file.subpath] = file;
+            }
         }
     });
 };
