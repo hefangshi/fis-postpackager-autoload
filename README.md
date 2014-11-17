@@ -12,6 +12,7 @@
  - 无需手工维护 ```<script src="path"></script>``` 或 ```<link rel="stylesheet" href="path">``` 标签引用资源，页面依赖的资源会自动加载，实现**像写Node.js程序一样编写前端页面**。
  - 与[fis-postprocessor-require-async](https://github.com/xiangshouding/fis-postprocessor-require-async)插件结合，支持[modjs](https://github.com/fex-team/mod)的require.async异步加载功能
  - 使[modjs](https://github.com/fex-team/mod)脱离后端静态资源管理依赖，使用成本更低，配合[fis-postpackager-simple](https://github.com/hefangshi/fis-postpackager-simple)插件，轻松优化页面性能。
+ - 支持[amd](https://github.com/fex-team/fis-postprocessor-amd)脱离后端静态资源管理，轻松加载AMD资源。
 
 ## 自定义输出
 
@@ -66,6 +67,9 @@ fis.config.set('settings.postpackager.autoload.include', /^\/somepath\//i);
 fis.config.set('settings.postpackager.autoload.scriptTag', '<!--SCRIPT_PLACEHOLDER-->');
 fis.config.set('settings.postpackager.autoload.styleTag', '<!--STYLE_PLACEHOLDER-->');
 fis.config.set('settings.postpackager.autoload.resourceMapTag', '<!--RESOURCEMAP_PLACEHOLDER-->');
+
+//开启AMD模式
+fis.config.set('settings.postpackager.autoload.type', 'requirejs');
 ```
 
 ## DEMO
