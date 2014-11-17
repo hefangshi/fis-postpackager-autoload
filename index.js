@@ -128,7 +128,9 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             //有打包的话就不要加url了，以减少map.js的体积
             if (res.pkg) {
                 r.pkg = res.pkg;
-                r.extras = {moduleId: res.extras.moduleId};
+                if (res.extras && res.extras.moduleId){
+                    r.extras = {moduleId: res.extras.moduleId};
+                }
                 if (!map.pkg[res.pkg]) {
                     var map_pkg = ret.map.pkg[res.pkg];
                     map.pkg[res.pkg] = {
@@ -146,7 +148,9 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
                 }
             } else {
                 r.url = res.uri;
-                r.extras = {moduleId: res.extras.moduleId};
+                if (res.extras && res.extras.moduleId){
+                    r.extras = {moduleId: res.extras.moduleId};
+                }
             }
         });
         var code = settings.codeGen(map);
