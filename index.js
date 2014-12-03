@@ -17,7 +17,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
 
     settings = fis.util.merge(defaultSettings, settings);
 
-    if (typeof settings.codeGen !== Function) {
+    if (typeof settings.codeGen !== 'function') {
         switch (settings.type){
             case 'mod':
                 settings.codeGen = modJsCodeGen;
