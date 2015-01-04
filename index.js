@@ -52,21 +52,6 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         return self.indexOf(value) === index;
     }
 
-    function isNotice(path) {
-        if(settings.notice && settings.notice.exclude) {
-            var pattern = settings.notice.exclude;
-            if(!(pattern instanceof Array)) {
-                pattern = [pattern];
-            }
-            for(var i = 0; i < pattern.length; i++) {
-                if(pattern[i].test(path)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
     /**
      * 页面中注入JS资源引用
      * @param jsList
@@ -248,7 +233,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             added[depId] = true;
             var dep = ret.ids[depId];
             if (!dep){
-                if(isNotice(file.subpath)) {
+                if(fis.util.filter(file.subpath, null, settings.notice.exclude)) {
                     fis.log.notice('can\'t find dep resource ['+depId+']');
                 }
                 return false;
@@ -278,7 +263,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             depScaned[depId] = true;
             var dep = ret.ids[depId];
             if (!dep){
-                if(isNotice(file.subpath)) {
+                if(fis.util.filter(file.subpath, null, settings.notice.exclude)) {
                     fis.log.notice('can\'t find dep resource ['+depId+']');
                 }
                 return false;
