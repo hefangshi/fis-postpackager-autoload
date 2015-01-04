@@ -233,7 +233,11 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             added[depId] = true;
             var dep = ret.ids[depId];
             if (!dep){
-                if(fis.util.filter(file.subpath, null, settings.notice.exclude)) {
+                var isNotice = true;
+                if(settings.notice && settings.notice.exclude) {
+                    isNotice = fis.util.filter(file.subpath, null, settings.notice.exclude);
+                }
+                if(isNotice) {
                     fis.log.notice('can\'t find dep resource ['+depId+']');
                 }
                 return false;
@@ -263,7 +267,11 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             depScaned[depId] = true;
             var dep = ret.ids[depId];
             if (!dep){
-                if(fis.util.filter(file.subpath, null, settings.notice.exclude)) {
+                var isNotice = true;
+                if(settings.notice && settings.notice.exclude) {
+                    isNotice = fis.util.filter(file.subpath, null, settings.notice.exclude);
+                }
+                if(isNotice) {
                     fis.log.notice('can\'t find dep resource ['+depId+']');
                 }
                 return false;
