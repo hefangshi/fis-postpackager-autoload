@@ -42,7 +42,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             if (file.pkg){
                 url = map.pkg[file.pkg].url;
             }
-            var moduleId = file.extras.moduleId || id;
+            var moduleId = file.extras && file.extras.moduleId || id;
             paths[moduleId] = url.replace(/\.js$/i , "");
         });
         return 'require.config({"paths":' + JSON.stringify(paths, null, opt.optimize ? null : 4) + '});';
