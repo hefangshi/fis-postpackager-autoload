@@ -12,6 +12,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         scriptTag : '<!--SCRIPT_PLACEHOLDER-->',
         styleTag : '<!--STYLE_PLACEHOLDER-->',
         resourceMapTag : '<!--RESOURCEMAP_PLACEHOLDER-->',
+        pageSubPath: 'pkg/map_{$hash}.js',
         type : 'mod'
     };
 
@@ -192,11 +193,11 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
      * @param content
      * @returns {*}
      */
-    function injectAsync(asyncList, content, usedSync) {
+    function injectAsync(asyncList, content, usedSync, filePath) {
         if (asyncList.length === 0){
             return content.replace(settings.resourceMapTag, '');
         }
-        var subpath = 'pkg/page_map_${index}.js'.replace('${index}', asyncCount);
+        var subpath = settings.pageSubPath.replace('${index}', asyncCount).replace('{$hash}', fis.util.md5(filePath));
         var file = genAsyncMap(asyncList, subpath, usedSync, settings.codeGen);
         asyncCount++;
         return injectAsyncWithMap(content, file);
@@ -352,7 +353,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         if (settings.useSiteMap) {
             content = injectSiteAsync(content);
         } else {
-            content = injectAsync(asyncList, content, usedSync);
+            content = injectAsync(asyncList, content, usedSync, file.subpath);
         }
         content = injectJs(jsList, content);
         file.setContent(content);
