@@ -42,7 +42,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             if (file.pkg){
                 url = map.pkg[file.pkg].url;
             }
-            var moduleId = file.extras.moduleId || id;
+            var moduleId = file.extras && file.extras.moduleId || id;
             paths[moduleId] = url.replace(/\.js$/i , "");
         });
         return 'require.config({"paths":' + JSON.stringify(paths, null, opt.optimize ? null : 4) + '});';
@@ -241,7 +241,13 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             added[depId] = true;
             var dep = ret.ids[depId];
             if (!dep){
-                fis.log.notice('can\'t find dep resource ['+depId+']');
+                var isNotice = true;
+                if(settings.notice && settings.notice.exclude) {
+                    isNotice = fis.util.filter(file.subpath, null, settings.notice.exclude);
+                }
+                if(isNotice) {
+                    fis.log.notice('can\'t find dep resource ['+depId+']');
+                }
                 return false;
             }
             depList = depList.concat(getDepList(dep, added));
@@ -269,7 +275,13 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             depScaned[depId] = true;
             var dep = ret.ids[depId];
             if (!dep){
-                fis.log.notice('can\'t find dep resource ['+depId+']');
+                var isNotice = true;
+                if(settings.notice && settings.notice.exclude) {
+                    isNotice = fis.util.filter(file.subpath, null, settings.notice.exclude);
+                }
+                if(isNotice) {
+                    fis.log.notice('can\'t find dep resource ['+depId+']');
+                }
                 return false;
             }
             asyncList = asyncList.concat(getAsyncList(dep, added, depScaned));
