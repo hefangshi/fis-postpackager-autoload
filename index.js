@@ -62,6 +62,10 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
     function injectJs(jsList, content) {
         var script = jsList.reduce(function (prev, now) {
             var uri = now.uri;
+            var format = settings.format;
+              if(format){
+                  uri = format.replace('$uri','"' + uri + '"');
+              }
             return [prev, '<script type="text/javascript" src="', uri, '"></script>\r\n'].join('');
         }, '');
         if (content.indexOf(settings.scriptTag) !== -1){
@@ -81,6 +85,10 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
     function injectCss(cssList, content) {
         var css = cssList.reduce(function (prev, now) {
             var uri = now.uri;
+            var format = settings.format;
+            if(format){
+                uri = format.replace('$uri','"' + uri + '"');
+            }
             return prev + '<link rel="stylesheet" type="text/css" href="' + uri + '">\r\n';
         }, '');
         if (content.indexOf(settings.styleTag) !== -1){
