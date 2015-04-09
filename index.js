@@ -176,7 +176,10 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         function genSiteAsyncMap() {
             var asyncList = [];
             fis.util.map(ret.map.res, function (id) {
-                asyncList.push(ret.ids[id]);
+                var res = ret.ids[id];
+                if (res.isJsLike) {
+                    asyncList.push(ret.ids[id]);
+                }
             });
             var subpath = (settings.subpath || 'pkg/map.js').replace(/^\//, '');
             return genAsyncMap(asyncList, subpath, null, settings.codeGen);
@@ -342,8 +345,6 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
                 jsList.push(res);
             else if (dep.isCssLike)
                 cssList.push(res);
-            else
-                fis.log.notice('[' + dep.getId() + '] is required, but ignored since it\'s not javascript or stylesheet');
         });
         asyncList = asyncList.filter(function (async) {
             return !usedSync[async.getId()];
