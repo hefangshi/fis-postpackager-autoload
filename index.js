@@ -363,7 +363,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
     var includeAsyncList = [];
 
     fis.util.map(ret.src, function (subpath, file) {
-        if (settings.include && (file.isJsLike || file.jsCssLike) && file.release && fis.util.filter(subpath, settings.include)){
+        if (settings.include && (file.isJsLike || file.isCssLike) && file.release && fis.util.filter(subpath, settings.include)){
             includeAsyncList.push(file);
             includeAsyncList = includeAsyncList.concat(getDepList(file), getAsyncList(file));
         }
