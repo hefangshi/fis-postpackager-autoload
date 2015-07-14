@@ -48,28 +48,31 @@
     $ vi path/to/project/fis-conf.js
 
 ```javascript
-//file : path/to/project/fis-conf.js
+// file : path/to/project/fis-conf.js
 fis.config.set('modules.postpackager', 'autoload');
 
-//添加combine插件，自动应用pack配置，打包零散资源
+// 添加combine插件，自动应用pack配置，打包零散资源
 //fis.config.set('modules.postpackager', 'autoload, simple');
 
-//useSiteMap设置使用整站/页面异步资源表配置，默认为false
+// useSiteMap设置使用整站/页面异步资源表配置，默认为false
 fis.config.set('settings.postpackager.autoload.useSiteMap', true);
 
-//useInlineMap设置内联resourceMap还是异步加载resourceMap，默认为false
+// useInlineMap设置内联resourceMap还是异步加载resourceMap，默认为false
 fis.config.set('settings.postpackager.autoload.useInlineMap', true);
 
 //通过include属性将额外的资源增加入resourceMap中
 fis.config.set('settings.postpackager.autoload.include', /^\/somepath\//i);
 
-//设置占位符
+// 设置占位符
 fis.config.set('settings.postpackager.autoload.scriptTag', '<!--SCRIPT_PLACEHOLDER-->');
 fis.config.set('settings.postpackager.autoload.styleTag', '<!--STYLE_PLACEHOLDER-->');
 fis.config.set('settings.postpackager.autoload.resourceMapTag', '<!--RESOURCEMAP_PLACEHOLDER-->');
 
-//开启AMD模式
+// 开启AMD模式
 fis.config.set('settings.postpackager.autoload.type', 'requirejs');
+
+// 美化resourceMap，即使开启压缩，也不会压缩resourceMap
+fis.config.set('settings.postpackager.autoload.beautyResourceMap', true);
 ```
 
 ## DEMO

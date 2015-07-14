@@ -9,47 +9,50 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
     var asyncCount = 0;
     var siteAsync = null;
     var defaultSettings = {
-        scriptTag : '<!--SCRIPT_PLACEHOLDER-->',
-        styleTag : '<!--STYLE_PLACEHOLDER-->',
-        resourceMapTag : '<!--RESOURCEMAP_PLACEHOLDER-->',
+        scriptTag: '<!--SCRIPT_PLACEHOLDER-->',
+        styleTag: '<!--STYLE_PLACEHOLDER-->',
+        resourceMapTag: '<!--RESOURCEMAP_PLACEHOLDER-->',
         pageSubPath: 'pkg/map_{$hash}.js',
-        type : 'mod'
+        type: 'mod',
+        beautyResourceMap: false
     };
 
     settings = fis.util.merge(defaultSettings, settings);
 
     if (typeof settings.codeGen !== 'function') {
-        switch (settings.type){
-            case 'mod':
-                settings.codeGen = modJsCodeGen;
-                break;
-            case 'requirejs':
-                settings.codeGen = requireJSCodeGen;
-                break;
-            default:
-                throw new Error('invalid type');
+        switch (settings.type) {
+        case 'mod':
+            settings.codeGen = modJsCodeGen;
+            break;
+        case 'requirejs':
+            settings.codeGen = requireJSCodeGen;
+            break;
+        default:
+            throw new Error('invalid type');
         }
     }
 
-    function modJsCodeGen(map){
-        return 'require.resourceMap(' + JSON.stringify(map, null, opt.optimize ? null : 4) + ');';
+    function modJsCodeGen(map) {
+        var indent = opt.optimize && !settings.beautyResourceMap ? null : 4;
+        return 'require.resourceMap(' + JSON.stringify(map, null, indent) + ');';
     }
 
-    function requireJSCodeGen(map){
+    function requireJSCodeGen(map) {
         var paths = {};
         var pkgs = {};
         fis.util.map(map.res, function (id, file) {
             var url = file.url;
-            if (file.pkg){
+            if (file.pkg) {
                 url = map.pkg[file.pkg].url;
             }
             var moduleId = file.extras && file.extras.moduleId || id;
-            paths[moduleId] = url.replace(/\.js$/i , "");
+            paths[moduleId] = url.replace(/\.js$/i, "");
         });
-        return 'require.config({"paths":' + JSON.stringify(paths, null, opt.optimize ? null : 4) + '});';
+        var indent = opt.optimize && !settings.beautyResourceMap ? null : 4;
+        return 'require.config({"paths":' + JSON.stringify(paths, null, indent) + '});';
     }
 
-    function unique(value, index, self){
+    function unique(value, index, self) {
         return self.indexOf(value) === index;
     }
 
@@ -64,9 +67,10 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             var uri = now.uri;
             return [prev, '<script type="text/javascript" src="', uri, '"></script>\r\n'].join('');
         }, '');
-        if (content.indexOf(settings.scriptTag) !== -1){
+        if (content.indexOf(settings.scriptTag) !== -1) {
             content = content.replace(settings.scriptTag, script);
-        }else{
+        }
+        else {
             content = content.replace(/<\/head>/, script + '\n$&');
         }
         return content;
@@ -83,9 +87,10 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             var uri = now.uri;
             return prev + '<link rel="stylesheet" type="text/css" href="' + uri + '">\r\n';
         }, '');
-        if (content.indexOf(settings.styleTag) !== -1){
+        if (content.indexOf(settings.styleTag) !== -1) {
             content = content.replace(settings.styleTag, css);
-        }else{
+        }
+        else {
             content = content.replace(/<\/head>/, css + '\n$&');
         }
         return content;
@@ -107,12 +112,13 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         };
         asyncList.forEach(function (async) {
             var id = async.getId();
-            if (ret.ids[id]){
-                if (ret.ids[id].isCssLike){
+            if (ret.ids[id]) {
+                if (ret.ids[id].isCssLike) {
                     return false;
                 }
-            }else{
-                fis.log.notice('can\'t find async resource ['+id+']');
+            }
+            else {
+                fis.log.notice('can\'t find async resource [' + id + ']');
                 return false;
             }
             var r = map.res[id] = {};
@@ -122,15 +128,17 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
                     var file = ret.ids[dep];
                     return file && !file.isCssLike && !usedSync[dep];
                 });
-                if (r.deps.length === 0){
+                if (r.deps.length === 0) {
                     delete r.deps;
                 }
             }
             //有打包的话就不要加url了，以减少map.js的体积
             if (res.pkg) {
                 r.pkg = res.pkg;
-                if (res.extras && res.extras.moduleId){
-                    r.extras = {moduleId: res.extras.moduleId};
+                if (res.extras && res.extras.moduleId) {
+                    r.extras = {
+                        moduleId: res.extras.moduleId
+                    };
                 }
                 if (!map.pkg[res.pkg]) {
                     var map_pkg = ret.map.pkg[res.pkg];
@@ -142,15 +150,18 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
                             var file = ret.ids[dep];
                             return file && !file.isCssLike && !usedSync[dep];
                         });
-                        if (map.pkg[res.pkg].deps.length === 0){
+                        if (map.pkg[res.pkg].deps.length === 0) {
                             delete map.pkg[res.pkg].deps;
                         }
                     }
                 }
-            } else {
+            }
+            else {
                 r.url = res.uri;
-                if (res.extras && res.extras.moduleId){
-                    r.extras = {moduleId: res.extras.moduleId};
+                if (res.extras && res.extras.moduleId) {
+                    r.extras = {
+                        moduleId: res.extras.moduleId
+                    };
                 }
             }
         });
@@ -197,7 +208,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
      * @returns {*}
      */
     function injectAsync(asyncList, content, usedSync, filePath) {
-        if (asyncList.length === 0){
+        if (asyncList.length === 0) {
             return content.replace(settings.resourceMapTag, '');
         }
         var subpath = settings.pageSubPath.replace('${index}', asyncCount).replace('{$hash}', fis.util.md5(filePath));
@@ -206,16 +217,19 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         return injectAsyncWithMap(content, file);
     }
 
-    function injectAsyncWithMap(content, resourceMapFile){
+    function injectAsyncWithMap(content, resourceMapFile) {
         var mapScript;
-        if (settings.useInlineMap){
+        if (settings.useInlineMap) {
             mapScript = '<script type="text/javascript" >\r\n' + resourceMapFile.getContent() + '\r\n</script>';
-        }else{
-            mapScript = '<script type="text/javascript" data-single="true" src="' + resourceMapFile.getUrl(opt.hash, opt.domain) + '"></script>';
         }
-        if (content.indexOf(settings.resourceMapTag) !== -1){
+        else {
+            mapScript = '<script type="text/javascript" data-single="true" src="' + resourceMapFile.getUrl(opt.hash,
+                opt.domain) + '"></script>';
+        }
+        if (content.indexOf(settings.resourceMapTag) !== -1) {
             content = content.replace(settings.resourceMapTag, mapScript);
-        }else{
+        }
+        else {
             content = content.replace(/<\/head>/, mapScript + '\n$&');
         }
         return content;
@@ -236,13 +250,13 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             }
             added[depId] = true;
             var dep = ret.ids[depId];
-            if (!dep){
+            if (!dep) {
                 var isNotice = true;
-                if(settings.notice && settings.notice.exclude) {
+                if (settings.notice && settings.notice.exclude) {
                     isNotice = fis.util.filter(file.subpath, null, settings.notice.exclude);
                 }
-                if(isNotice) {
-                    fis.log.notice('can\'t find dep resource ['+depId+']');
+                if (isNotice) {
+                    fis.log.notice('can\'t find dep resource [' + depId + ']');
                 }
                 return false;
             }
@@ -270,13 +284,13 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             }
             depScaned[depId] = true;
             var dep = ret.ids[depId];
-            if (!dep){
+            if (!dep) {
                 var isNotice = true;
-                if(settings.notice && settings.notice.exclude) {
+                if (settings.notice && settings.notice.exclude) {
                     isNotice = fis.util.filter(file.subpath, null, settings.notice.exclude);
                 }
-                if(isNotice) {
-                    fis.log.notice('can\'t find dep resource ['+depId+']');
+                if (isNotice) {
+                    fis.log.notice('can\'t find dep resource [' + depId + ']');
                 }
                 return false;
             }
@@ -288,8 +302,8 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
             }
             added[asyncId] = true;
             var async = ret.ids[asyncId];
-            if (!async){
-                fis.log.notice('can\'t find async resource ['+asyncId+']');
+            if (!async) {
+                fis.log.notice('can\'t find async resource [' + asyncId + ']');
                 return false;
             }
             asyncList = asyncList.concat(getAsyncList(async, added, depScaned));
@@ -314,7 +328,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         asyncList = asyncList.concat(include);
         asyncList = asyncList.filter(function (async, index) {
             //去除重复资源
-            if (asyncList.indexOf(async) !== index){
+            if (asyncList.indexOf(async) !== index) {
                 return false;
             }
             //将样式表资源强制设定为同步加载，避免异步加载样式表
@@ -326,16 +340,16 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         });
         //生成同步资源引用列表
         var usedPkg = {};
-        var usedSync= {};
+        var usedSync = {};
         depList.forEach(function (dep) {
             var res = ret.map.res[dep.getId()];
             res.id = dep.getId();
             usedSync[dep.getId()] = true;
-            if (res.pkg && ret.map.pkg[res.pkg]){
-                if (usedPkg[res.pkg]){
+            if (res.pkg && ret.map.pkg[res.pkg]) {
+                if (usedPkg[res.pkg]) {
                     return true;
                 }
-                ret.map.pkg[res.pkg].has.forEach(function(has){
+                ret.map.pkg[res.pkg].has.forEach(function (has) {
                     usedSync[has] = true;
                 });
                 usedPkg[res.pkg] = true;
@@ -353,7 +367,8 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
         content = injectCss(cssList, content);
         if (settings.useSiteMap) {
             content = injectSiteAsync(content);
-        } else {
+        }
+        else {
             content = injectAsync(asyncList, content, usedSync, file.subpath);
         }
         content = injectJs(jsList, content);
@@ -363,7 +378,8 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
     var includeAsyncList = [];
 
     fis.util.map(ret.src, function (subpath, file) {
-        if (settings.include && (file.isJsLike || file.isCssLike) && file.release && fis.util.filter(subpath, settings.include)){
+        if (settings.include && (file.isJsLike || file.isCssLike) && file.release && fis.util.filter(subpath,
+            settings.include)) {
             includeAsyncList.push(file);
             includeAsyncList = includeAsyncList.concat(getDepList(file), getAsyncList(file));
         }
@@ -372,7 +388,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
     fis.util.map(ret.src, function (subpath, file) {
         if (file.isHtmlLike) {
             injectAutoLoad(file, includeAsyncList);
-            if (file.useCache){
+            if (file.useCache) {
                 ret.pkg[file.subpath] = file;
             }
         }
