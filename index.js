@@ -379,14 +379,14 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
 
     fis.util.map(ret.src, function (subpath, file) {
         if (settings.include && (file.isJsLike || file.isCssLike) && file.release && fis.util.filter(subpath,
-            settings.include)) {
+                settings.include)) {
             includeAsyncList.push(file);
             includeAsyncList = includeAsyncList.concat(getDepList(file), getAsyncList(file));
         }
     });
 
     fis.util.map(ret.src, function (subpath, file) {
-        if (file.isHtmlLike) {
+        if (file.isHtmlLike && file.useCompile && file.extras.useAutoload !== false) {
             injectAutoLoad(file, includeAsyncList);
             if (file.useCache) {
                 ret.pkg[file.subpath] = file;
