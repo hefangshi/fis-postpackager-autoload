@@ -386,7 +386,7 @@ module.exports = function (ret, conf, settings, opt) { //打包后处理
     });
 
     fis.util.map(ret.src, function (subpath, file) {
-        if (file.isHtmlLike && file.useCompile && file.extras.useAutoload !== false) {
+        if (file.isHtmlLike && file.useCompile && (!file.extras || file.extras.useAutoload !== false)) {
             injectAutoLoad(file, includeAsyncList);
             if (file.useCache) {
                 ret.pkg[file.subpath] = file;
