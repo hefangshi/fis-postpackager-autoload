@@ -1,6 +1,6 @@
 {
   "name": "fis-postpackager-autoload",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "a postpackager plugin for fis to auto load required resource",
   "main": "index.js",
   "scripts": {
