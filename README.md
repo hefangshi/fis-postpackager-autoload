@@ -1,5 +1,7 @@
 # fis-postpackager-autoload
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/hefangshi/fis-postpackager-autoload.svg)](https://greenkeeper.io/)
+
 用于自动加载模块化资源的[FIS](https://github.com/fex-team/fis)插件
 
 ## 功能
